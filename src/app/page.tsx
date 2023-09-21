@@ -1,29 +1,58 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import Image from "next/image";
+import ImageAsset from "@/components/ImageAsset";
 
 const App = () => {
   const ref = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
-  const [position, setPosition] = React.useState({ x: 0, y: 0 });
-  const [offset, setOffset] = React.useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = React.useState(false);
-
-  const arra = [1, 2, 4, 5, 6, 7, 7, 8];
+  const [imageArray, setImageArray] = useState<
+    {
+      id: number;
+      width: number;
+      src: string;
+      position: { x: number; y: number };
+      zIndex: number;
+    }[]
+  >([
+    {
+      id: 5,
+      width: 50,
+      src: "/images/10000.png",
+      position: { x: 0, y: 0 },
+      zIndex: 5,
+    },
+    {
+      id: 6,
+      width: 100,
+      src: "/images/10000.png",
+      position: { x: 100, y: 200 },
+      zIndex: 2,
+    },
+    {
+      id: 7,
+      width: 200,
+      src: "/images/10000.png",
+      position: { x: 50, y: 100 },
+      zIndex: 3,
+    },
+    {
+      id: 8,
+      width: 300,
+      src: "/images/10000.png",
+      position: { x: 200, y: 50 },
+      zIndex: 1,
+    },
+  ]);
 
   const onButtonClick = useCallback(() => {
-    console.log("ref", ref);
     if (ref.current === null) {
       return;
     }
     toPng(ref.current, { cacheBust: true })
       .then((dataUrl) => {
-        console.log("dataUrl", dataUrl);
         const link = document.createElement("a");
         link.download = "sdfsf.png";
-        console.log("link", link);
         link.href = dataUrl;
         link.click();
       })
@@ -32,52 +61,6 @@ const App = () => {
       });
   }, [ref]);
 
-  const onMouseDown = useCallback(
-    (event: TouchEvent) => {
-      if (event.target !== imageRef.current) {
-        return;
-      }
-      setDragging(true);
-      console.log("down");
-      const touch = event.touches[0];
-      setOffset({
-        x: touch.clientX - position.x,
-        y: touch.clientY - position.y,
-      });
-    },
-    [position.x, position.y]
-  );
-
-  const onMouseMove = useCallback(
-    (event: TouchEvent) => {
-      if (dragging) {
-        console.log("drag");
-        const touch = event.touches[0];
-        setPosition({
-          x: touch.clientX - offset.x,
-          y: touch.clientY - offset.y,
-        });
-      }
-    },
-    [offset.x, offset.y, dragging]
-  );
-
-  const onMouseUp = useCallback(() => {
-    setDragging(false);
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener("touchstart", onMouseDown);
-    document.addEventListener("touchmove", onMouseMove);
-    document.addEventListener("touchend", onMouseUp);
-
-    return () => {
-      document.removeEventListener("touchstart", onMouseDown);
-      document.removeEventListener("touchmove", onMouseMove);
-      document.removeEventListener("touchend", onMouseUp);
-    };
-  }, [onMouseDown, onMouseMove, onMouseUp]);
-
   return (
     <>
       <div
@@ -85,29 +68,51 @@ const App = () => {
         style={{
           width: 700,
           height: 700,
-          backgroundColor: "red",
+          backgroundColor: "green",
           position: "relative",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            left: position.x,
-            top: position.y,
-          }}
-        >
-          <Image
-            src={"/images/10000.png"}
-            alt=""
-            width={500}
-            height={500}
-            ref={imageRef}
+        {imageArray.map((image, index) => (
+          <ImageAsset
+            key={index}
+            width={image.width}
+            src={image.src}
+            defaultPosition={image.position}
+            zIndex={image.zIndex}
           />
-        </div>
-        sdfasfas
+        ))}
       </div>
       <br />
       <br />
+      <div>zoom in out</div>
+      <div
+        onClick={() => {
+          setImageArray((prev) => {
+            return prev.map((image) => {
+              return {
+                ...image,
+                width: image.width + 10,
+              };
+            });
+          });
+        }}
+      >
+        +
+      </div>
+      <div
+        onClick={() => {
+          setImageArray((prev) => {
+            return prev.map((image) => {
+              return {
+                ...image,
+                width: image.width - 10,
+              };
+            });
+          });
+        }}
+      >
+        -
+      </div>
       <br />
       <br />
       <button onClick={onButtonClick}>Click me</button>
